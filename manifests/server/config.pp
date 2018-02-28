@@ -21,8 +21,15 @@ class cups::server::config inherits cups::server {
     group => 'lp'
   }
 
-  file { '/etc/cups/lpoptions':
-    ensure => 'absent',
+  concat { '/etc/cups/lpoptions':
+    owner => 'root',
+    mode  => '0644',
+  }
+
+  concat::fragment{ 'lpoptions_header':
+    target  => '/etc/cups/lpoptions',
+    content => "# This file is managed by puppet - please make changes there\n",
+    order   => '01',
   }
 
   file { '/etc/cups/cupsd.conf':
@@ -39,4 +46,22 @@ class cups::server::config inherits cups::server {
     }
   }
 
+}
+
+
+define cups::lpoptions::register(
+  String $content = "",
+  String $order   = '10',
+) {
+  if $content == '' {
+    $body = $name
+  } else {
+    $body = $content
+  }
+
+  concat::fragment{ "lpoptions_fragment_$name":
+    target  => '/etc/cups/lpoptions',
+    order   => $order,
+    content => $content,
+  }
 }
